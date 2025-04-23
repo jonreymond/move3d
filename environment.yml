@@ -9,3 +9,8 @@ dependencies:
  - pip:
     - hydra-core==1.3.2
     - kineticstoolkit
+    - opencv-python
+    - numpy
+    - beautifulsoup4
+    - lxml
+    - datetime

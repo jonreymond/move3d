@@ -176,3 +176,4 @@ cython_debug/
 #
 3dmotion/
 .DS_Store
+outputs/
