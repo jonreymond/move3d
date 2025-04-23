@@ -14,3 +14,5 @@ dependencies:
     - beautifulsoup4
     - lxml
     - datetime
+    - rtmlib
+    - onnxruntime
