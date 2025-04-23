@@ -3,6 +3,9 @@ from datetime import datetime
 import numpy as np
 import cv2
 
+import kineticstoolkit.geometry as geom
+import kineticstoolkit.lab as ktk
+
 from typing import Optional, Union
 
 def read_timestamp(file_path: str) -> Optional[Union[datetime, str]]:
@@ -84,3 +87,114 @@ def load_mp4(path, resize_shape=None, skip_frames=1, max_frames=None):
 
     cap.release()
     return np.array(frames)
+
+
+"""
+-----------------------------------------------
+C3D LOADING AND TRANSFORMATIONS
+-----------------------------------------------
+"""
+
+def load_c3d(path):
+    """loading a c3d file
+
+    Args:
+        path (str): path to c3d file
+
+    Returns:
+        np.array: the resulted numpy array with shape (num frames, height, width, )
+    """
+    c3d_file = ktk.read_c3d(path)
+
+
+    return c3d_file["Points"]
+
+def transform_c3d_into_local_hip_ankle(c3d_points):
+    """
+    transform the c3d points into local hip and ankle coordinates
+    Args:
+        c3d_points (np.array): the c3d points with shape (num frames, num points, 3)
+
+    Returns:
+        np.array: the resulted numpy array with shape (num frames, num points, 3)
+    """
+    # 2) Extract raw (N×4) marker arrays
+    hip4   = c3d_points.data["LHIP"]
+    knee4  = c3d_points.data["LKNE"]
+    ankle4 = c3d_points.data["LANK"]
+
+    # 3) FEMUR CS: build 3D vectors (drop homogeneous col)
+    O_f3   = hip4[:, :3]                          # origin
+    Y_f3   = (hip4 - knee4)[:, :3]                # y axis (cranial)
+    YZ_f3  = (hip4 - ankle4)[:, :3]               # in‐plane vector
+
+    # normalize directions
+    def norm(v): return v / np.linalg.norm(v, axis=1, keepdims=True)
+    Y_f3, YZ_f3 = norm(Y_f3), norm(YZ_f3)
+
+    # promote to homogeneous (N×4)
+    N      = c3d_points.time.shape[0]
+    O_f4   = np.hstack([O_f3,  np.ones((N,1))])   # w=1 for origin
+    Y_f4   = np.hstack([Y_f3,  np.zeros((N,1))])  # w=0 for direction
+    YZ_f4  = np.hstack([YZ_f3, np.zeros((N,1))])
+
+    # create femur transforms via y & yz → returns (N,4,4) ndarray :contentReference[oaicite:1]{index=1}
+    femur_tf = geom.create_transform_series(
+        positions=O_f4,
+        y=Y_f4,
+        yz=YZ_f4,
+        length=N
+    )
+
+    # 4) ANKLE CS **without** toe: use tibia axis + global vertical as plane vector
+    O_a3   = ankle4[:, :3]                        # origin at ankle
+    Y_a3   = norm((knee4 - ankle4)[:, :3])        # tibial long axis
+
+    # global vertical direction vector, homogeneous
+    Z0_4   = np.tile([0, 1, 0, 0], (N,1))         # w=0 for direction
+
+    O_a4   = np.hstack([O_a3,  np.ones((N,1))])
+    Y_a4   = np.hstack([Y_a3,  np.zeros((N,1))])
+
+    # create ankle transforms via y & yz=global vertical
+    ankle_tf = geom.create_transform_series(
+        positions=O_a4,
+        y=Y_a4,
+        yz=Z0_4,
+        length=N
+    )
+
+    # 5) Wrap each transform array in a ktk.TimeSeries
+    fem_ts = ktk.TimeSeries(); fem_ts.time = c3d_points.time.copy()
+    fem_ts.data["FemurCS"] = femur_tf
+
+    ank_ts = ktk.TimeSeries(); ank_ts.time = c3d_points.time.copy()
+    ank_ts.data["AnkleCS"] = ankle_tf  
+
+    combined = c3d_points.merge(fem_ts).merge(ank_ts)
+
+    hip_to_ankle = ktk.geometry.get_local_coordinates(
+        combined.data["FemurCS"], combined.data["AnkleCS"]
+        )
+
+    
+    return hip_to_ankle
+
+def calculate_c3d_angles(local_c3d_points):
+    """calculate the angles of the c3d points
+
+    Args:
+        c3d_points (np.array): the c3d points with shape (num frames, num points, 3)
+
+    Returns:
+        np.array: the resulted numpy array with shape (num frames, num angles)
+    """
+    angles = ktk.geometry.get_angles(local_c3d_points, "ZXY")
+
+    return np.unwrap(angles)
+"""
+-----------------------------------------------
+ANGLE CALCULATION FROM 3D POINTS
+-----------------------------------------------
+"""
+
