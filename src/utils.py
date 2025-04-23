@@ -3,19 +3,49 @@ from datetime import datetime
 import numpy as np
 import cv2
 
-def read_time(file_path):
-    with open(file_path, 'r') as f:
-        data = f.read()
+from typing import Optional, Union
 
-    # Passing the stored data inside
-    Bs_data = BeautifulSoup(data, "xml")
-    b_name = Bs_data.find('CreationDate')
-    value = b_name['value']
-    try:
-        return datetime.fromisoformat(value)
-    except ValueError:
-        # fallback: return the raw string
-        return value
+def read_timestamp(file_path: str) -> Optional[Union[datetime, str]]:
+    """
+    Extract a timestamp from either:
+     - a ProfessionalDisc NonRealTimeMeta XML (CreationDate/@value or root@lastUpdate),
+     - or a Qualisys Trial .history XML (Param name="Capture Date" @value).
+    
+    Returns:
+      - datetime.datetime on successful parse,
+      - the raw string if parsing fails,
+      - or None if no timestamp is found.
+    """
+    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+        xml = f.read()
+    
+    soup = BeautifulSoup(xml, "xml")
+    
+    cd = soup.find('CreationDate')
+    if cd and cd.has_attr('value'):
+        val = cd['value']
+        try:
+            return datetime.fromisoformat(val)
+        except ValueError:
+            return val
+    
+    root = soup.find()
+    if root and root.has_attr('lastUpdate'):
+        val = root['lastUpdate']
+        try:
+            return datetime.fromisoformat(val)
+        except ValueError:
+            return val
+    
+    param = soup.find('Param', attrs={'name': 'Capture Date'})
+    if param and param.has_attr('value'):
+        val = param['value']  # e.g. "2025-Mar-26 16:38:04"
+        try:
+            return datetime.strptime(val, "%Y-%b-%d %H:%M:%S")
+        except ValueError:
+            return val
+    
+    return None
     
  
     
