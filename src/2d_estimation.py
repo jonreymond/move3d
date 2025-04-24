@@ -249,19 +249,19 @@ def main(config:DictConfig):
             output_video_path = os.path.join(config.output_folder, f'keypoints_{filename}')
             output_json_path = os.path.join(config.output_json_folder, f'keypoints_{os.path.splitext(filename)[0]}.json')
             alpha_pose_output_path = os.path.join(config.output_json_folder, f'alpha_format_keypoints_{os.path.splitext(filename)[0]}.json')
-            video_path_3d = os.path.join(config.output_folder,'3D-reconstruction', f'keypoints_{filename}')
+            video_3d_path = os.path.join(config.video_3d_path, f'keypoints_{filename}')
 
-            if not os.path.exists(video_path_3d):
-                os.makedirs(video_path_3d)
+            if not os.path.exists(video_3d_path):
+                os.makedirs(video_3d_path)
             
             print(f"Processing: {filename}")
             process_2D(model, video_path, output_video_path, output_json_path)
             raw_data = detect_patient(video_path, output_json_path)
             
             convert_JSON_MB_format(raw_data, alpha_pose_output_path)
-            motion_BERT(alpha_pose_output_path, video_path, video_path_3d)
+            motion_BERT(alpha_pose_output_path, video_path, video_3d_path)
 
-            show_video(video_path_3d)
+            show_video(video_3d_path)
             
     cv2.destroyAllWindows()
     

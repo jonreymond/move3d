@@ -1,0 +1,24 @@
+name: move3d-full
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - numpy
+  - opencv
+  - beautifulsoup4
+  - lxml
+  - hydra-core=1.3.2
+  - kineticstoolkit
+  - onnxruntime
+  - pip
+  - pytorch
+  - torchvision
+  - torchaudio
+  - pytorch-cuda=11.6
+  - pip:
+      - rtmlib
+      - imageio
+      - -r requirements.txt

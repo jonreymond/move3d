@@ -1,6 +1,7 @@
-video_folder: /pvc/scratch/3dmotion/20250326/camera
-output_folder: ""
-output_json_folder: ""
+video_folder:  ../videos #if on server : /pvc/scratch/3dmotion/20250326/camera
+output_folder: ../data
+output_json_folder: ../data/keypoints
+video_3d_path : ../data/3d-reconstruction
 
 model:
     mode: balanced
