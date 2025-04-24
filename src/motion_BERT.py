@@ -2,13 +2,15 @@ import json
 import os
 import platform
 import subprocess
+from pathlib import Path
 
-def motion_BERT(alpha_pose_output_path, video_path, video_path_3d)
+def motion_BERT(alpha_pose_output_path, video_path, video_path_3d):
 
     # Run MotionBERT function with pretrained model
-    config_path = os.path.join('..', 'MotionBERT', 'configs', 'pose3d', 'MB_ft_h36m_global_lite.yaml')
-    eval_path = os.path.join('..', 'MotionBERT', 'checkpoint', 'pose3d', 'FT_MB_lite_MB_ft_h36m_global_lite', 'best_epoch.bin')
-    infer_script = os.path.join("..", "MotionBERT", "infer_wild.py")
+    current_dir = Path(__file__).resolve().parent
+    config_path = os.path.join(current_dir, 'MotionBERT', 'configs', 'pose3d', 'MB_ft_h36m_global_lite.yaml')
+    eval_path = os.path.join(current_dir, 'MotionBERT', 'checkpoint', 'pose3d', 'FT_MB_lite_MB_ft_h36m_global_lite', 'best_epoch.bin')
+    infer_script = os.path.join(current_dir, "MotionBERT", "infer_wild.py")
 
     # Run MotionBERT command
     # python MotionBERT/infer_wild.py  
@@ -63,7 +65,7 @@ def show_video(video_path_3d):
     if platform.system() == 'Darwin':  # macOS
         subprocess.run(['open', video_path_3d])
     elif platform.system() == 'Windows':
-        os.startfile(video_path)
+        os.startfile(video_path_3d)
     elif platform.system() == 'Linux':
         subprocess.run(['xdg-open', video_path_3d])
     else:

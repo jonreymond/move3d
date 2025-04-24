@@ -26,6 +26,8 @@ def parse_args():
     return opts
 
 opts = parse_args()
+cwd = os.getcwd()
+os.chdir("src/MotionBERT/")
 args = get_config(opts.config)
 
 model_backbone = load_backbone(args)
@@ -36,6 +38,9 @@ if torch.cuda.is_available():
 print('Loading checkpoint', opts.evaluate)
 #checkpoint = torch.load(opts.evaluate, map_location=lambda storage, loc: storage)
 checkpoint = torch.load(opts.evaluate, map_location='cpu', weights_only=False)
+
+print(checkpoint['model_pos'])
+print("============================")
 
 model_backbone.load_state_dict(checkpoint['model_pos'], strict=True)
 model_pos = model_backbone
