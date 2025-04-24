@@ -7,3 +7,7 @@ lxml
 datetime
 rtmlib
 onnxruntime
+subprocess
+platform
+os
+json

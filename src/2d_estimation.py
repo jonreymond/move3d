@@ -5,6 +5,7 @@ from rtmlib import Body, draw_skeleton
 
 import hydra
 from omegaconf import DictConfig
+from motion_BERT import *
 
 
 def get_current_wd():
@@ -120,9 +121,115 @@ def process_2D(model, video_path, output_video_path, output_json_path):
     filename = os.path.basename(video_path)
     return save_2d_to_json(filename, keypoints=keypoints, scores=scores, output_json_path=output_json_path)
     
+def detect_patient(video_path, output_json_path):
+    """
+    Script does: 
+    - detect if several people
+    - plot the keypoints in different colors + first image
+    - ask the user which person they want to keep
+    - return the corresponding data
+
+    """   
+    # Load the json
+    with open(output_json_path, "r") as f:
+        raw_data = json.load(f)
     
+    # Get first frame
+    frame_kpts = raw_data["keypoints"][0]
+
+    # Handle single/multiple person
+    if isinstance(frame_kpts[0][0], list):
+        people_kpts = frame_kpts  # multiple people
+        print(f"→ Number of people in frame 0: {len(frame_kpts)}")
+        print('Multiple people detected on the video. Chose the ID of the person of interest.')
+        print('Please refer to the ID in the legend of the picture.')
+        
+        plot(people_kpts)
+        while True:
+            try:
+                user_input = int(input("Please enter the ID as an integer: "))
+                if 0 <= user_input <= (len(frame_kpts)-1):
+                    print(f"You selected: {user_input}")
+                    break
+                else:
+                    print("Number not in range. Try again.")
+            except ValueError:
+                print("Invalid input. Please enter an integer.")
 
 
+        extracted_keypoints = [
+            frame[user_input] for frame in raw_data["keypoints"]
+        ]
+
+        extracted_scores = [
+            frame[user_input] for frame in raw_data["scores"]
+        ]
+
+        new_data = {
+            "video": raw_data["video"],
+            "keypoints": extracted_keypoints,
+            "scores": extracted_scores
+        }
+        # To plot the first frame 
+        keypoints = new_data["keypoints"][0] 
+        
+        plot(keypoints)
+
+        return new_data
+    
+    
+    else:
+        people_kpts = [frame_kpts]  # single person
+        print('Only one person detected on the video.')
+        return raw_data
+
+
+
+    return raw_data_indiv
+
+def plot(frame_kpts):
+    """
+    Plot keypoints for the first frame
+    """
+    # Handle single/multiple person
+    if isinstance(frame_kpts[0][0], list):
+        people_kpts = frame_kpts  # multiple people
+    else:
+        people_kpts = [frame_kpts]  # single person
+
+    # COCO skeleton (17 joints)
+    skeleton = [
+        (5, 7), (7, 9),       # Left arm
+        (6, 8), (8,10),       # Right arm
+        (11,13), (13,15),     # Left leg
+        (12,14), (14,16),     # Right leg
+        (5,6), (11,12),       # Shoulders & hips
+        (0,1), (1,3), (0,2), (2,4),  # Nose → eyes → ears
+        (5,11), (6,12)        # Torso links
+    ]
+
+    # Use colormap for people
+    num_people = len(people_kpts)
+    colors = cm.get_cmap('tab10', num_people)
+
+    plt.figure(figsize=(10, 7))
+
+    for idx, kpts in enumerate(people_kpts):
+        xs = [pt[0] for pt in kpts]
+        ys = [pt[1] for pt in kpts]
+        plt.scatter(xs, ys, label=f"Person {idx}", color=colors(idx), s=40)
+
+        for i, j in skeleton:
+            if i < len(kpts) and j < len(kpts):
+                x1, y1 = kpts[i]
+                x2, y2 = kpts[j]
+                plt.plot([x1, x2], [y1, y2], color=colors(idx), linewidth=2)
+
+    plt.title("First frame - All people (Color-coded)")
+    plt.legend()
+    plt.gca().invert_yaxis()
+    plt.axis("equal")
+    plt.show()
 
 
 @hydra.main(version_base=None, 
@@ -141,9 +248,20 @@ def main(config:DictConfig):
             video_path = os.path.join(config.video_folder, filename)
             output_video_path = os.path.join(config.output_folder, f'keypoints_{filename}')
             output_json_path = os.path.join(config.output_json_folder, f'keypoints_{os.path.splitext(filename)[0]}.json')
+            alpha_pose_output_path = os.path.join(config.output_json_folder, f'alpha_format_keypoints_{os.path.splitext(filename)[0]}.json')
+            video_path_3d = os.path.join(config.output_folder,'3D-reconstruction', f'keypoints_{filename}')
 
+            if not os.path.exists(video_path_3d):
+                os.makedirs(video_path_3d)
+            
             print(f"Processing: {filename}")
             process_2D(model, video_path, output_video_path, output_json_path)
+            raw_data = detect_patient(video_path, output_json_path)
+            
+            convert_JSON_MB_format(raw_data, alpha_pose_output_path)
+            motion_BERT(alpha_pose_output_path, video_path, video_path_3d)
+
+            show_video(video_path_3d)
             
     cv2.destroyAllWindows()
     

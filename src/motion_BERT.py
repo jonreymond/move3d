@@ -1,20 +1,14 @@
 import json
 import os
+import platform
+import subprocess
 
-def motion_BERT():
-
-    # Convert JSON to MotionBERT compatible files
-    json_to_convert_file_path = [] # TO COMPLETE
-    converted_json_path = [] # TO COMPLETE
-    
-    convert_JSON_MB_format(json_to_convert_file_path, converted_json_path)
+def motion_BERT(alpha_pose_output_path, video_path, video_path_3d)
 
     # Run MotionBERT function with pretrained model
-    video_path = []
-    config_path = os.path.join('..', '..', 'MotionBERT', 'configs', 'pose3d', 'MB_ft_h36m_global_lite.yaml')
-    eval_path = os.path.join('..', '..', 'MotionBERT', 'checkpoint', 'pose3d', 'FT_MB_lite_MB_ft_h36m_global_lite', 'best_epoch.bin')
-    output_path = os.path.join('..', 'data', 'reconstruction')
-    infer_script = os.path.join("..", "..", "MotionBERT", "infer_wild.py")
+    config_path = os.path.join('..', 'MotionBERT', 'configs', 'pose3d', 'MB_ft_h36m_global_lite.yaml')
+    eval_path = os.path.join('..', 'MotionBERT', 'checkpoint', 'pose3d', 'FT_MB_lite_MB_ft_h36m_global_lite', 'best_epoch.bin')
+    infer_script = os.path.join("..", "MotionBERT", "infer_wild.py")
 
     # Run MotionBERT command
     # python MotionBERT/infer_wild.py  
@@ -28,8 +22,8 @@ def motion_BERT():
     command = [
         "python", infer_script,
         "--vid_path", video_path,
-        "--json_path", converted_json_path,
-        "--out_path", output_path,
+        "--json_path", alpha_pose_output_path,
+        "--out_path", video_path_3d,
         "--config", config_path,
         "--evaluate", eval_path,
         "--pixel"
@@ -40,10 +34,7 @@ def motion_BERT():
 
 
 
-def convert_JSON_MB_format(json_file_path, output_path):
-    # Load the JSON your friend exported
-    with open(json_file_path, "r") as f:
-        raw_data = json.load(f)
+def convert_JSON_MB_format(raw_data, alpha_pose_output_path):
 
     all_keypoints = raw_data["keypoints"]  # List of [17 x 2] keypoints per frame
     all_scores = raw_data["scores"]        # List of [17 x 1] scores per frame
@@ -65,5 +56,15 @@ def convert_JSON_MB_format(json_file_path, output_path):
         alphapose_format.append(entry)
 
     # Save to AlphaPose-style JSON file
-    with open(output_path, "w") as f:
+    with open(alpha_pose_output_path, "w") as f:
         json.dump(alphapose_format, f)
+
+def show_video(video_path_3d):
+    if platform.system() == 'Darwin':  # macOS
+        subprocess.run(['open', video_path_3d])
+    elif platform.system() == 'Windows':
+        os.startfile(video_path)
+    elif platform.system() == 'Linux':
+        subprocess.run(['xdg-open', video_path_3d])
+    else:
+        print("Unsupported OS")
