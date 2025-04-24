@@ -7,6 +7,8 @@ import hydra
 from omegaconf import DictConfig
 from motion_BERT import *
 
+import matplotlib.pyplot as plt
+
 
 def get_current_wd():
     print(f"Current working directory: {os.getcwd()}")
@@ -49,18 +51,20 @@ def save_2d_to_json(filename, keypoints, scores, output_json_path):
 
     Args:
         filename (_type_): _description_
-        keypoints (_type_): _description_
-        scores (_type_): _description_
+        keypoints (np.ndarray): _description_
+        scores (np.ndarray): _description_
         output_json_path (_type_): _description_
     
     Returns:
         Dict: json_data
     """
     # Save keypoints to JSON
+    
+    
     json_data = {
         "video": filename,
-        "keypoints": keypoints,
-        "scores": scores
+        "keypoints": keypoints.tolist(),
+        "scores": scores.tolist()
     }
 
     with open(output_json_path, 'w') as f:
@@ -187,6 +191,8 @@ def detect_patient(video_path, output_json_path):
 
     return raw_data_indiv
 
+
+
 def plot(frame_kpts):
     """
     Plot keypoints for the first frame
@@ -210,7 +216,7 @@ def plot(frame_kpts):
 
     # Use colormap for people
     num_people = len(people_kpts)
-    colors = cm.get_cmap('tab10', num_people)
+    colors = plt.cm.get_cmap('tab10', num_people)
 
     plt.figure(figsize=(10, 7))
 
