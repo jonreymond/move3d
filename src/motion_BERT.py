@@ -4,13 +4,17 @@ import platform
 import subprocess
 from pathlib import Path
 
+from utils import download_motion_bert
+
 def motion_BERT(alpha_pose_output_path, video_path, video_path_3d):
 
+    # Load checkpoints from Hugging face
+    download_motion_bert(os.path.join('src','MotionBERT'))
+
     # Run MotionBERT function with pretrained model
-    current_dir = Path(__file__).resolve().parent
-    config_path = os.path.join(current_dir, 'MotionBERT', 'configs', 'pose3d', 'MB_ft_h36m_global_lite.yaml')
-    eval_path = os.path.join(current_dir, 'MotionBERT', 'checkpoint', 'pose3d', 'FT_MB_lite_MB_ft_h36m_global_lite', 'best_epoch.bin')
-    infer_script = os.path.join(current_dir, "MotionBERT", "infer_wild.py")
+    config_path = os.path.join('src','MotionBERT', 'configs', 'pose3d', 'MB_ft_h36m_global_lite.yaml')
+    eval_path = os.path.join('src','MotionBERT', 'checkpoint', 'pose3d', 'FT_MB_lite_MB_ft_h36m_global_lite', 'best_epoch.bin')
+    infer_script = os.path.join('src',"MotionBERT", "infer_wild.py")
 
     # Run MotionBERT command
     # python MotionBERT/infer_wild.py  
@@ -65,7 +69,7 @@ def show_video(video_path_3d):
     if platform.system() == 'Darwin':  # macOS
         subprocess.run(['open', video_path_3d])
     elif platform.system() == 'Windows':
-        os.startfile(video_path_3d)
+        os.startfile(video_path)
     elif platform.system() == 'Linux':
         subprocess.run(['xdg-open', video_path_3d])
     else:

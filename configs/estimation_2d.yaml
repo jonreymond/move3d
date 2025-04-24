@@ -1,12 +1,9 @@
-video_folder:  /Users/jonathan/Desktop/move3d/data/test #../videos #if on server : /pvc/scratch/3dmotion/20250326/camera
-output_folder: ./Users/jonathan/Desktop/move3d/data
-output_json_folder: /Users/jonathan/Desktop/move3d/data/keypoints
-video_3d_path : /Users/jonathan/Desktop/move3d/data/3d-reconstruction
+video_folder: ${hydra:runtime.cwd}/videos #if on server : /pvc/scratch/3dmotion/20250326/camera
+output_folder: ${hydra:runtime.cwd}/data
+output_json_folder: ${hydra:runtime.cwd}/data/keypoints
+video_3d_path : ${hydra:runtime.cwd}/data/3d-reconstruction
 
 model:
     mode: balanced
     backend: onnxruntime
-    device: cpu
-
-motion_bert:
-  
+    device: cuda

@@ -3,8 +3,8 @@ from datetime import datetime
 import numpy as np
 import cv2
 
-import kineticstoolkit.geometry as geom
-import kineticstoolkit.lab as ktk
+# import kineticstoolkit.geometry as geom
+# import kineticstoolkit.lab as ktk
 
 from typing import Optional, Union
 
@@ -210,7 +210,7 @@ def make_homogeneous(points3):
     return np.hstack([points3, np.ones((N,1))])
 
 import numpy as np
-import kineticstoolkit.geometry as geom
+#import kineticstoolkit.geometry as geom
 
 # ── 1) LOCAL AXES ─────────────────────────────────────────────────────────────
 def calculate_local_axes_all(
