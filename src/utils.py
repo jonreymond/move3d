@@ -8,6 +8,9 @@ import kineticstoolkit.lab as ktk
 
 from typing import Optional, Union
 
+from huggingface_hub import list_repo_files, hf_hub_download
+
+
 def read_timestamp(file_path: str) -> Optional[Union[datetime, str]]:
     """
     Extract a timestamp from either:
@@ -308,3 +311,21 @@ def calculate_angles(
             angles = np.unwrap(angles, axis=0)
 
     return angles
+
+
+
+def download_motion_bert(output_dir):
+
+    repo_id = "walterzhu/MotionBERT"
+    folder_name = "checkpoint/pose3d"
+
+    # List all files in the repo
+    all_files = list_repo_files(repo_id)
+
+    # Filter files inside the 'checkpoint' folder
+    checkpoint_files = [f for f in all_files if f.startswith(f"{folder_name}/")]
+
+    # Download each file
+    for file in checkpoint_files:
+        local_path = hf_hub_download(repo_id=repo_id, filename=file, local_dir=output_dir)
+        print(f"Downloaded: {local_path}")
