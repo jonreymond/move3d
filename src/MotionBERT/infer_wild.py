@@ -35,9 +35,14 @@ if torch.cuda.is_available():
 
 print('Loading checkpoint', opts.evaluate)
 #checkpoint = torch.load(opts.evaluate, map_location=lambda storage, loc: storage)
-checkpoint = torch.load(opts.evaluate, map_location='cpu', weights_only=False)
+#checkpoint = torch.load(opts.evaluate, map_location='cpu', weights_only=False)
+#model_backbone.load_state_dict(checkpoint['model_pos'], strict=True)
 
-model_backbone.load_state_dict(checkpoint['model_pos'], strict=True)
+#checkpoint = torch.load(args.evaluate, map_location='cpu')
+checkpoint = torch.load(opts.evaluate, map_location='cpu')
+state_dict = checkpoint['model_pos']
+model_backbone.load_state_dict(state_dict, strict=True)
+
 model_pos = model_backbone
 model_pos.eval()
 testloader_params = {
@@ -91,16 +96,9 @@ with torch.no_grad():
 
 results_all = np.hstack(results_all)
 results_all = np.concatenate(results_all)
-
-video_base = os.path.splitext(os.path.basename(opts.vid_path))[0]
-video_out_path = os.path.join(opts.out_path, video_base)
-
-#render_and_save(results_all, '%s/X3D.mp4' % (opts.out_path), keep_imgs=False, fps=fps_in)
-render_and_save(results_all, f'{video_out_path}_3D.mp4', keep_imgs=False, fps=fps_in)
+render_and_save(results_all, '%s/X3D.mp4' % (opts.out_path), keep_imgs=False, fps=fps_in)
 if opts.pixel:
     # Convert to pixel coordinates
     results_all = results_all * (min(vid_size) / 2.0)
     results_all[:,:,:2] = results_all[:,:,:2] + np.array(vid_size) / 2.0
-
-#np.save('%s/X3D.npy' % (opts.out_path), results_all)
-np.save(f'{video_out_path}_3D.npy', results_all)
+np.save('%s/X3D.npy' % (opts.out_path), results_all)

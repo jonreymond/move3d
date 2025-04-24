@@ -3,10 +3,12 @@ from datetime import datetime
 import numpy as np
 import cv2
 
-import kineticstoolkit.geometry as geom
-import kineticstoolkit.lab as ktk
+#import kineticstoolkit.geometry as geom
+#import kineticstoolkit.lab as ktk
 
 from typing import Optional, Union
+
+from huggingface_hub import list_repo_files, hf_hub_download
 
 def read_timestamp(file_path: str) -> Optional[Union[datetime, str]]:
     """
@@ -88,6 +90,21 @@ def load_mp4(path, resize_shape=None, skip_frames=1, max_frames=None):
     cap.release()
     return np.array(frames)
 
+def download_motion_bert(output_dir):
+
+    repo_id = "walterzhu/MotionBERT"
+    folder_name = "checkpoint/pose3d"
+
+    # List all files in the repo
+    all_files = list_repo_files(repo_id)
+
+    # Filter files inside the 'checkpoint' folder
+    checkpoint_files = [f for f in all_files if f.startswith(f"{folder_name}/")]
+
+    # Download each file
+    for file in checkpoint_files:
+        local_path = hf_hub_download(repo_id=repo_id, filename=file, local_dir=output_dir)
+        print(f"Downloaded: {local_path}")
 
 """
 -----------------------------------------------
@@ -207,7 +224,7 @@ def make_homogeneous(points3):
     return np.hstack([points3, np.ones((N,1))])
 
 import numpy as np
-import kineticstoolkit.geometry as geom
+#import kineticstoolkit.geometry as geom
 
 # ── 1) LOCAL AXES ─────────────────────────────────────────────────────────────
 def calculate_local_axes_all(

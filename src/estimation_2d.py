@@ -8,7 +8,9 @@ from omegaconf import DictConfig
 from motion_BERT import *
 
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
+import numpy as np
 
 def get_current_wd():
     print(f"Current working directory: {os.getcwd()}")
@@ -63,8 +65,8 @@ def save_2d_to_json(filename, keypoints, scores, output_json_path):
     
     json_data = {
         "video": filename,
-        "keypoints": keypoints.tolist(),
-        "scores": scores.tolist()
+        "keypoints": keypoints,
+        "scores": scores
     }
 
     with open(output_json_path, 'w') as f:
@@ -123,9 +125,71 @@ def process_2D(model, video_path, output_video_path, output_json_path):
         print(f"Saved {frame_count} frames to {output_video_path}")
         
     filename = os.path.basename(video_path)
-    return save_2d_to_json(filename, keypoints=keypoints, scores=scores, output_json_path=output_json_path)
+    return save_2d_to_json(filename, keypoints=all_keypoints, scores=all_scores, output_json_path=output_json_path)
     
 def detect_patient(video_path, output_json_path):
+    """
+    Ask user to select a person on frame 0, then track that person across frames.
+    """
+    with open(output_json_path, "r") as f:
+        raw_data = json.load(f)
+
+    frame0 = raw_data["keypoints"][0]
+    scores0 = raw_data["scores"][0]
+
+    if isinstance(frame0[0][0], list):  # Multiple people
+        people_kpts = frame0
+        print(f"→ Number of people in frame 0: {len(frame0)}")
+        print('Multiple people detected on the video. Chose the ID of the person of interest.')
+        print('Please refer to the ID in the legend of the picture.')
+
+        plot(people_kpts)  # you already have this
+        while True:
+            try:
+                user_input = int(input("Please enter the ID as an integer: "))
+                if 0 <= user_input < len(frame0):
+                    print(f"You selected: {user_input}")
+                    break
+                else:
+                    print("Number not in range. Try again.")
+            except ValueError:
+                print("Invalid input. Please enter an integer.")
+
+        # Reference keypoints to track
+        ref_kpts = np.array(frame0[user_input])
+
+        extracted_keypoints = []
+        extracted_scores = []
+
+        for frame_kpts, frame_scores in zip(raw_data["keypoints"], raw_data["scores"]):
+            frame_kpts_np = np.array(frame_kpts)  # shape (N_people, N_keypoints, 2)
+            frame_scores_np = np.array(frame_scores)
+
+            if len(frame_kpts_np.shape) == 3:  # still multiple people
+                # Compute distance between each detected person and the reference
+                dists = np.linalg.norm(frame_kpts_np - ref_kpts, axis=(1, 2))  # (N_people,)
+                best_idx = np.argmin(dists)
+                extracted_keypoints.append(frame_kpts[best_idx])
+                extracted_scores.append(frame_scores[best_idx])
+            else:
+                # Only one person
+                extracted_keypoints.append(frame_kpts)
+                extracted_scores.append(frame_scores)
+
+        new_data = {
+            "video": raw_data["video"],
+            "keypoints": extracted_keypoints,
+            "scores": extracted_scores
+        }
+
+        plot(new_data["keypoints"][0], name_fig='Selected_participant.png')
+        return new_data
+
+    else:
+        print("Only one person detected.")
+        return raw_data
+
+def detect_patient_old(video_path, output_json_path):
     """
     Script does: 
     - detect if several people
@@ -177,7 +241,7 @@ def detect_patient(video_path, output_json_path):
         # To plot the first frame 
         keypoints = new_data["keypoints"][0] 
         
-        plot(keypoints)
+        plot(keypoints, name_fig='Selected_participant.png')
 
         return new_data
     
@@ -189,11 +253,8 @@ def detect_patient(video_path, output_json_path):
 
 
 
-    return raw_data_indiv
 
-
-
-def plot(frame_kpts):
+def plot(frame_kpts, name_fig="Choose_participant.png"):
     """
     Plot keypoints for the first frame
     """
@@ -216,7 +277,7 @@ def plot(frame_kpts):
 
     # Use colormap for people
     num_people = len(people_kpts)
-    colors = plt.cm.get_cmap('tab10', num_people)
+    colors = cm.get_cmap('tab10', num_people)
 
     plt.figure(figsize=(10, 7))
 
@@ -235,7 +296,10 @@ def plot(frame_kpts):
     plt.legend()
     plt.gca().invert_yaxis()
     plt.axis("equal")
+    plt.savefig(name_fig)
     plt.show()
+
+
 
 
 @hydra.main(version_base=None, 
@@ -248,9 +312,11 @@ def main(config:DictConfig):
         mode=config.model.mode,
         backend=config.model.backend,
         device=config.model.device)
+    print(f"Looking for videos in: {config.video_folder}")
+    print("Files found:", os.listdir(config.video_folder))
     
     for filename in os.listdir(config.video_folder):
-        if filename.endswith('.MP4'):
+        if (filename.endswith('.MP4') or filename.endswith('.mp4')):
             video_path = os.path.join(config.video_folder, filename)
             output_video_path = os.path.join(config.output_folder, f'keypoints_{filename}')
             output_json_path = os.path.join(config.output_json_folder, f'keypoints_{os.path.splitext(filename)[0]}.json')
