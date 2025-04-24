@@ -181,3 +181,9 @@ outputs/
 models/
 
 data/keypoint_videos/
+
+move3d-hackers-2025-04-23/
+
+draft/
+
+test.*
