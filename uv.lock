@@ -133,6 +133,15 @@ wheels = [
 ]
 
 [[package]]
+name = "huggingface"
+version = "0.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/9d/a4/168b574a23c1841fab5b24ecac98a88ea626ea3c746c481f79eb360c81f2/huggingface-0.0.1.tar.gz", hash = "sha256:0a2f228fd956801d68b7c6a8bef478dfa60c4b7d7eba572ea7de39ecf87e505a", size = 2320, upload_time = "2020-12-18T18:37:00.599Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f4/8c/e61fbc39c0a37140e1d4941c4af29e2d53bacf9f4559e3de24d8f4e484f0/huggingface-0.0.1-py3-none-any.whl", hash = "sha256:98a3409537557cd2fd768997ef94cab08529f86c5e106e6d54bbabdd5ee03910", size = 2455, upload_time = "2020-12-18T18:36:59.096Z" },
+]
+
+[[package]]
 name = "humanfriendly"
 version = "10.0"
 source = { registry = "https://pypi.org/simple" }
@@ -156,6 +165,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/6d/8e/07e42bc434a847154083b315779b0a81d567154504624e181caf2c71cd98/hydra-core-1.3.2.tar.gz", hash = "sha256:8a878ed67216997c3e9d88a8e72e7b4767e81af37afb4ea3334b269a4390a824", size = 3263494, upload_time = "2023-02-23T18:33:43.03Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c6/50/e0edd38dcd63fb26a8547f13d28f7a008bc4a3fd4eb4ff030673f22ad41a/hydra_core-1.3.2-py3-none-any.whl", hash = "sha256:fa0238a9e31df3373b35b0bfb672c34cc92718d21f81311d8996a16de1141d8b", size = 154547, upload_time = "2023-02-23T18:33:40.801Z" },
+]
+
+[[package]]
+name = "imageio"
+version = "2.37.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "pillow" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0c/47/57e897fb7094afb2d26e8b2e4af9a45c7cf1a405acdeeca001fdf2c98501/imageio-2.37.0.tar.gz", hash = "sha256:71b57b3669666272c818497aebba2b4c5f20d5b37c81720e5e1a56d59c492996", size = 389963, upload_time = "2025-01-20T02:42:37.089Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cb/bd/b394387b598ed84d8d0fa90611a90bee0adc2021820ad5729f7ced74a8e2/imageio-2.37.0-py3-none-any.whl", hash = "sha256:11efa15b87bc7871b61590326b2d635439acc321cf7f8ce996f812543ce10eed", size = 315796, upload_time = "2025-01-20T02:42:34.931Z" },
 ]
 
 [[package]]
@@ -467,8 +489,10 @@ dependencies = [
     { name = "filelock" },
     { name = "flatbuffers" },
     { name = "fsspec" },
+    { name = "huggingface" },
     { name = "humanfriendly" },
     { name = "hydra-core" },
+    { name = "imageio" },
     { name = "imageio-ffmpeg" },
     { name = "ipdb" },
     { name = "ipython" },
@@ -522,6 +546,7 @@ dependencies = [
     { name = "scipy" },
     { name = "setuptools" },
     { name = "six" },
+    { name = "smplx" },
     { name = "soupsieve" },
     { name = "stack-data" },
     { name = "sympy" },
@@ -551,8 +576,10 @@ requires-dist = [
     { name = "filelock", specifier = "==3.18.0" },
     { name = "flatbuffers", specifier = "==25.2.10" },
     { name = "fsspec", specifier = "==2025.3.2" },
+    { name = "huggingface", specifier = ">=0.0.1" },
     { name = "humanfriendly", specifier = "==10.0" },
     { name = "hydra-core", specifier = "==1.3.2" },
+    { name = "imageio", specifier = ">=2.37.0" },
     { name = "imageio-ffmpeg", specifier = "==0.6.0" },
     { name = "ipdb", specifier = "==0.13.13" },
     { name = "ipython", specifier = "==9.1.0" },
@@ -606,6 +633,7 @@ requires-dist = [
     { name = "scipy", specifier = "==1.15.2" },
     { name = "setuptools", specifier = "==79.0.1" },
     { name = "six", specifier = "==1.17.0" },
+    { name = "smplx", specifier = ">=0.1.28" },
     { name = "soupsieve", specifier = "==2.7" },
     { name = "stack-data", specifier = "==0.6.3" },
     { name = "sympy", specifier = "==1.13.3" },
@@ -1282,6 +1310,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81", size = 34031, upload_time = "2024-12-04T17:35:28.174Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload_time = "2024-12-04T17:35:26.475Z" },
+]
+
+[[package]]
+name = "smplx"
+version = "0.1.28"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "torch" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/69/eb/51da17b291fb1221317a1ff65a301fb2cf9c6c0dd87a0caec4cbcd06c1da/smplx-0.1.28.tar.gz", hash = "sha256:c3a1e2c3069cdf7a4b34fd250c2484c8bb1a4fd9c14490da9359af5fbc64fbe6", size = 28500, upload_time = "2021-05-26T12:14:10.194Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c9/33/bd37416aec828e7465652d9e2525fe52de0a29a581f1519cc51a74485091/smplx-0.1.28-py3-none-any.whl", hash = "sha256:e8ff3d278a015c097dc86d44a38475da4ac170042943c84c08eee433629406a7", size = 29903, upload_time = "2021-05-26T12:14:08.641Z" },
 ]
 
 [[package]]
