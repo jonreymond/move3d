@@ -192,9 +192,119 @@ def calculate_c3d_angles(local_c3d_points):
     angles = ktk.geometry.get_angles(local_c3d_points, "ZXY")
 
     return np.unwrap(angles)
+
 """
 -----------------------------------------------
 ANGLE CALCULATION FROM 3D POINTS
 -----------------------------------------------
 """
+def normalize(v):
+    return v / np.linalg.norm(v, axis=1, keepdims=True)
 
+def make_homogeneous(points3):
+    """Turn (N×3) into (N×4) with last col = 1."""
+    N = points3.shape[0]
+    return np.hstack([points3, np.ones((N,1))])
+
+import numpy as np
+import kineticstoolkit.geometry as geom
+
+# ── 1) LOCAL AXES ─────────────────────────────────────────────────────────────
+def calculate_local_axes_all(
+    J: np.ndarray,
+    hip_idx: int,
+    knee_idx: int,
+    ankle_idx: int,
+    global_vertical: np.ndarray = np.array([0.0, 1.0, 0.0]),
+) -> dict:
+    """
+    Compute (N×4) homogeneous origin + two axis vectors for both
+    femur (hip→knee→ankle-plane) and ankle (knee→ankle + vertical).
+    Returns {'femur': (O4,A4,P4), 'ankle': (O4,A4,P4)}.
+    """
+    N = J.shape[0]
+
+    def normalize(v):
+        return v / np.linalg.norm(v, axis=1, keepdims=True)
+
+    hip3, knee3, ankle3 = J[:,hip_idx], J[:,knee_idx], J[:,ankle_idx]
+
+    # Femur
+    O_f3 = hip3
+    A_f3 = normalize(hip3 - knee3)
+    P_f3 = normalize(hip3 - ankle3)
+    O_f4 = np.hstack([O_f3,  np.ones((N,1))])
+    A_f4 = np.hstack([A_f3,  np.zeros((N,1))])
+    P_f4 = np.hstack([P_f3,  np.zeros((N,1))])
+
+    # Ankle
+    O_a3 = ankle3
+    A_a3 = normalize(knee3 - ankle3)
+    P0   = np.tile(global_vertical[None,:], (N,1))
+    P_a3 = normalize(P0)
+    O_a4 = np.hstack([O_a3, np.ones((N,1))])
+    A_a4 = np.hstack([A_a3, np.zeros((N,1))])
+    P_a4 = np.hstack([P_a3, np.zeros((N,1))])
+
+    return {
+        "femur": (O_f4, A_f4, P_f4),
+        "ankle": (O_a4, A_a4, P_a4)
+    }
+
+# ── 2) TRANSFORM MATRICES ────────────────────────────────────────────────────
+def calculate_transform_matrices_all(axes: dict) -> dict:
+    """
+    From axes dict with keys 'femur' and 'ankle' mapping to (O4,A4,P4),
+    build (N×4×4) homogeneous transforms for each segment.
+    """
+    Ts = {}
+    for seg in ("femur","ankle"):
+        O4,A4,P4 = axes[seg]
+        N = O4.shape[0]
+        Ts[seg] = geom.create_transform_series(
+            positions=O4,
+            y=A4,
+            yz=P4,
+            length=N
+        )
+    return Ts
+
+# ── 3) ANGLE CALCULATION ─────────────────────────────────────────────────────
+def calculate_angles(
+    Ts: dict,
+    seq: str = "ZXY",
+    degrees: bool = True,
+    flip: bool = False,
+    unwrap: bool = True
+) -> np.ndarray:
+    """
+    Compute Euler angles from the transforms dict produced by
+    calculate_transform_matrices_all.
+
+    Parameters
+    ----------
+    Ts : dict
+        Should have keys "femur" and "ankle", each an (N,4,4) array.
+    seq, degrees, flip, unwrap : as before.
+
+    Returns
+    -------
+    angles : (N,3) array of Euler angles [θ1,θ2,θ3].
+    """
+    T_fem = Ts["femur"]
+    T_ank = Ts["ankle"]
+
+    # express femur in ankle frame + orthogonality check
+    T_local = geom.get_local_coordinates(T_fem, T_ank)
+
+    # extract Euler angles
+    angles = geom.get_angles(T_local, seq=seq, degrees=degrees, flip=flip)
+
+    # unwrap if requested
+    if unwrap:
+        if degrees:
+            angles = np.rad2deg(np.unwrap(np.deg2rad(angles), axis=0))
+        else:
+            angles = np.unwrap(angles, axis=0)
+
+    return angles
