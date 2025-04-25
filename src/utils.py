@@ -315,6 +315,11 @@ def calculate_angles(
 
 
 def download_motion_bert(output_dir):
+    """Function to download the pre-trained weights of the MotionBERT from Hugging Face
+
+    Args:
+        output_dir (str): where to save the checkpoint folder containing all the pre-trained weights
+    """
 
     repo_id = "walterzhu/MotionBERT"
     folder_name = "checkpoint/pose3d"
