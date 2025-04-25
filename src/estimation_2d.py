@@ -6,6 +6,7 @@ from rtmlib import Body, draw_skeleton
 import hydra
 from omegaconf import DictConfig
 from motion_BERT import *
+from utils import *
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -125,6 +126,7 @@ def process_2D(model, video_path, output_video_path, output_json_path):
         print(f"Saved {frame_count} frames to {output_video_path}")
         
     filename = os.path.basename(video_path)
+    print(f"Video filename: {filename}")
     return save_2d_to_json(filename, keypoints=all_keypoints, scores=all_scores, output_json_path=output_json_path)
     
 def detect_patient(video_path, output_json_path):
@@ -185,6 +187,77 @@ def detect_patient(video_path, output_json_path):
         plot(new_data["keypoints"][0], name_fig='Selected_participant.png')
         return new_data
 
+    else:
+        print("Only one person detected.")
+        return raw_data
+
+def detect_patient_2(video_path, output_json_path):
+    """
+    Script does: 
+    - detect if several people
+    - plot the keypoints in different colors + first image
+    - ask the user which person they want to keep
+    - return the corresponding data
+
+    """   
+    # Load the jsonplot
+    with open(output_json_path, "r") as f:
+        raw_data = json.load(f)
+    
+    # Get first frame
+    frame0 = raw_data["keypoints"][0]
+    scores0 = raw_data["scores"][0]
+
+    nb_people = len(frame0)
+    return nb_people, plot(frame0)
+
+def get_new_data(output_json_path, user_input): 
+    """
+    Get the new data from the raw data and the user input
+
+    Args:
+        raw_data (Dict): the raw data from the json file
+        user_input (int): the user input for the person of interest
+
+    Returns:
+        Dict: the new data with only the keypoints and scores of the person of interest
+    """
+    with open(output_json_path, "r") as f:
+        raw_data = json.load(f)
+    
+    # Get first frame
+    frame0 = raw_data["keypoints"][0]
+    scores0 = raw_data["scores"][0]
+
+    if isinstance(frame0[0][0], list):
+        ref_kpts = np.array(frame0[user_input])
+
+        extracted_keypoints = []
+        extracted_scores = []
+
+        for frame_kpts, frame_scores in zip(raw_data["keypoints"], raw_data["scores"]):
+            frame_kpts_np = np.array(frame_kpts)  # shape (N_people, N_keypoints, 2)
+            frame_scores_np = np.array(frame_scores)
+
+            if len(frame_kpts_np.shape) == 3:  # still multiple people
+                # Compute distance between each detected person and the reference
+                dists = np.linalg.norm(frame_kpts_np - ref_kpts, axis=(1, 2))  # (N_people,)
+                best_idx = np.argmin(dists)
+                extracted_keypoints.append(frame_kpts[best_idx])
+                extracted_scores.append(frame_scores[best_idx])
+            else:
+                # Only one person
+                extracted_keypoints.append(frame_kpts)
+                extracted_scores.append(frame_scores)
+
+        new_data = {
+            "video": raw_data["video"],
+            "keypoints": extracted_keypoints,
+            "scores": extracted_scores
+        }
+
+        return new_data
+    
     else:
         print("Only one person detected.")
         return raw_data
@@ -279,7 +352,7 @@ def plot(frame_kpts, name_fig="Choose_participant.png"):
     num_people = len(people_kpts)
     colors = cm.get_cmap('tab10', num_people)
 
-    plt.figure(figsize=(10, 7))
+    fig = plt.figure(figsize=(10, 7))
 
     for idx, kpts in enumerate(people_kpts):
         xs = [pt[0] for pt in kpts]
@@ -297,7 +370,10 @@ def plot(frame_kpts, name_fig="Choose_participant.png"):
     plt.gca().invert_yaxis()
     plt.axis("equal")
     plt.savefig(name_fig)
-    plt.show()
+    png = get_img_from_fig(fig)
+    plt.close(fig)  # Close the figure to free memory
+    # plt.show()
+    return png
 
 
 

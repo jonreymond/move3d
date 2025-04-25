@@ -9,10 +9,11 @@ import os
 import shutil
 import tempfile
 import numpy as np
+import glob2 as glob
 from estimation_2d import *
 from utils import *
 from pathlib import Path
-import time
+
 
 # Step 1: process until user decision point
 # Save extracted frame into a temporary directory so Gradio can access it
@@ -37,6 +38,13 @@ def continue_processing(video_path, choice):
 
 
 
+def resolve_video_path(folder_path: str) -> str:
+    # Find all MP4 (or AVI, MOV, etc.) files in the directory
+    video_files = glob.glob(os.path.join(folder_path, "*.mp4"))
+    if not video_files:
+        raise FileNotFoundError(f"No video file found in {folder_path}")
+    # If there are multiple, you can sort or pick the first
+    return sorted(video_files)[0]
 
     
         
@@ -52,19 +60,22 @@ def main(config:DictConfig):
         backend=config.model.backend,
         device=config.model.device)
     
-    
-    filename = "results"
+  
+    # video_path = os.path.join(config.video_folder, filename)
+    # output_video_path = os.path.join(config.output_folder, f'keypoints_{filename}')
+    # output_json_path = os.path.join(config.output_json_folder, f'keypoints_{os.path.splitext(filename)[0]}.json')
+    # alpha_pose_output_path = os.path.join(config.output_json_folder, f'alpha_format_keypoints_{os.path.splitext(filename)[0]}.json')
+    # video_3d_path = os.path.join(config.video_3d_path, f'keypoints_{filename}')
 
-    output_f = Path(config.output_folder)
+    output_video_path = ""
+    output_json_path = ""
+    alpha_pose_output_path = ""
+    video_3d_path = ""
 
+    video_2d_path = ""
 
-    output_video_path = os.path.join(config.output_folder, f'keypoints_{filename}.mp4')
-    output_json_path = os.path.join(config.output_json_folder, f'keypoints_{os.path.splitext(filename)[0]}.json')
-    alpha_pose_output_path = os.path.join(config.output_json_folder, f'alpha_format_keypoints_{os.path.splitext(filename)[0]}.json')
-    video_3d_path = os.path.join(config.video_3d_path, f'keypoints_{filename}')
-    
-    if not os.path.exists(video_3d_path):
-        os.makedirs(video_3d_path)
+    # if not os.path.exists(video_3d_path):
+    #     os.makedirs(video_3d_path)
                 
             
     # return the JSON data as a dict 
@@ -101,6 +112,18 @@ def main(config:DictConfig):
             gr.update(visible=False),             # validation_result
             0  # reset people‐count state to zero  # validation_result
         )
+        nonlocal output_video_path, output_json_path, alpha_pose_output_path, video_3d_path, video_2d_path
+
+        filename = os.path.basename(video)
+
+        output_video_path = os.path.join(config.output_folder, f'keypoints_{filename}')
+        output_json_path = os.path.join(config.output_json_folder, f'keypoints_{os.path.splitext(filename)[0]}.json')
+        alpha_pose_output_path = os.path.join(config.output_json_folder, f'alpha_format_keypoints_{os.path.splitext(filename)[0]}.json')
+        video_3d_path = os.path.join(config.video_3d_path, f'keypoints_{filename}')
+        video_2d_path = video
+
+        if not os.path.exists(video_3d_path):
+                os.makedirs(video_3d_path)
 
         # 2) Run your heavy-lifting
         process_2D(model2d, video, output_video_path, output_json_path)
@@ -143,50 +166,16 @@ def main(config:DictConfig):
             gr.update(visible=False),  # continue_btn
             gr.update(value="⏳ Processing…", visible=True),  # status
             gr.update(visible=False),  # validation_result
-            gr.update(visible=True),  # video_out
-            gr.update(visible=False),    # img_out
-            gr.update(visible=False),
-            gr.update(visible=False),
-            gr.update(visible=False)
+            gr.update(visible=True)  # video_out
         )
         idx = int(selected)
-        # raw_data = get_new_data(output_json_path, idx)
-        # convert_JSON_MB_format(raw_data, alpha_pose_output_path)
-        # motion_BERT(alpha_pose_output_path, selected, video_3d_path)
-        orig = r"D:\Downloads\X3D-8.mp4"
-        if not os.path.isfile(orig):
-        # handle missing file …
-            pass
-
-        # Copy into a safe place—here we use the system temp directory
-        dst = shutil.copy(orig, tempfile.gettempdir())
-
-
-        orig_png1 = r"D:\Downloads\Knee Flexion Angles Over Time 1 sec.png"
-        if os.path.isfile(orig_png1):
-            dst_png1 = shutil.copy(orig_png1, tempfile.gettempdir())
-        else:
-            dst_png1 = None
-
-        orig_png2 = r"D:\Downloads\Knee Angle Asymmetry 1 sec.png"
-        if os.path.isfile(orig_png2):
-            dst_png2 = shutil.copy(orig_png2, tempfile.gettempdir())
-        else:
-            dst_png2 = None
-
-        
-        orig_png3 = r"D:\Downloads\Knee Range of Motion 1 sec.png"
-        if os.path.isfile(orig_png3):
-            dst_png3 = shutil.copy(orig_png3, tempfile.gettempdir())
-        else:
-            dst_png3 = None
-
-        orig_png4 = r"D:\Downloads\Hip Flexion Angles Over Time 1 sec.png"
-        if os.path.isfile(orig_png4):
-            dst_png4 = shutil.copy(orig_png4, tempfile.gettempdir())
-        else:
-            dst_png4 = None
-        time.sleep(10)
+        raw_data = get_new_data(output_json_path, idx)
+        print("hello")
+        convert_JSON_MB_format(raw_data, alpha_pose_output_path)
+        print("ahhhh")
+        motion_BERT(alpha_pose_output_path, video_2d_path, video_3d_path)
+        print("mmmm")
+        video_file = resolve_video_path(video_3d_path)
         yield (
             gr.update(visible=False),  # img
             gr.update(visible=False),  # nb_people_text
@@ -194,11 +183,7 @@ def main(config:DictConfig):
             gr.update(visible=False),  # continue_btn
             gr.update(value="", visible=False),  # status
             gr.update(visible=True),  # validation_result
-            gr.update(value=dst, visible=True),  # video_out
-            gr.update(value=dst_png1,   visible=True),   # img_out
-            gr.update(value=dst_png2,   visible=True),
-            gr.update(value=dst_png3,   visible=True),
-            gr.update(value=dst_png4,   visible=True)
+            gr.update(value=video_file, visible=True)  # video_out
         )
     # Build Gradio interface with title and two-column layout
     with gr.Blocks(title="Video Review & Edit") as demo:
@@ -224,10 +209,6 @@ def main(config:DictConfig):
             with gr.Column():
                 gr.Markdown("## Result")
                 video_out = gr.Video(label="Result Video")
-                img_out1   = gr.Image(label="Result Image", visible=False)
-                img_out2   = gr.Image(label="Result Image", visible=False)
-                img_out3   = gr.Image(label="Result Image", visible=False)
-                img_out4   = gr.Image(label="Result Image", visible=False)
 
         
             # process_btn.click(
@@ -266,11 +247,7 @@ def main(config:DictConfig):
                     continue_btn,
                     status,
                     validation_result,
-                    video_out,
-                    img_out1,
-                    img_out2,
-                    img_out3,
-                    img_out4
+                    video_out
                 ],
                 show_progress="full"
             )
