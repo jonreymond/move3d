@@ -16,17 +16,8 @@ Then continue with:
 - `uv sync`
 - `uv run src/estimation_2d.py`
 
-## installation
+## Conda environment installation
 Make sure to have installed Conda or miniconda in your machine. Then run `conda env create -f environment.yml`.
 You could also use mamba to build the environment quicker. First, run `conda install -n base -c conda-forge mamba` if mamba is not installed, then `mamba env create -f environment.yml`.
 
-## Run the pypeline with UV
-To install the environment, run the following pipelines: 
-- `curl -LsSf https://astral.sh/uv/install.sh | sh`
-
-Once it is done, copy paste the command printed by the previous command looking like : `source $HOME/.local/bin/env`
-
-Then continue with:
-- `uv sync`
-- `uv run src/estimation_2d.py`
 
