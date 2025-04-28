@@ -1,4 +1,4 @@
-# move3d
+# 3D motion reconstruction of Spinal Cord injury rehabilitation sessions
 Welcome in the repository of the project Move3D, for 3D motion reconstruction of Spinal Cord injury rehabilitation sessions. 
 
 The pipeline takes as an input a MP4 video and output the reconstruction in 3D. The code will ask you to chose the person of interest, based on the first frame. It allows you to chose the person of interest for modeling. 
