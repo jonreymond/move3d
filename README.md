@@ -9,7 +9,7 @@ Put all the MP4 videos (in .mp4 or .MP4 format in the videos folder in the repos
 
 ## Conda environment installation
 Install this conda environment if you have planned to run the code locally on your machine. Make sure to have installed Conda or miniconda in your machine. Then run `conda env create -f environment.yml`.
-You could also use mamba to build the environment quicker. First, run `conda install -n base -c conda-forge mamba` if mamba is not installed, then `mamba env create -f environment.yml`.
+You could also use mamba to build the environment quicker. First, run `conda install -n base -c conda-forge mamba` if mamba is not installed, then `mamba env create -f envs/environment.yml`. In the same folder, we provide another environment if the user wants to run the code with GPUs.
 
 
 ## UV environment installation + execution
@@ -20,6 +20,6 @@ Once it is done, copy paste the command printed by the previous command looking 
 
 Then continue with:
 - `uv sync`
-- `uv run src/estimation_2d.py`
+- `uv run src/pipeline.py`
 
 

@@ -10,7 +10,7 @@ import shutil
 import tempfile
 import numpy as np
 import glob2 as glob
-from estimation_2d import *
+from pipeline import *
 from utils import *
 from pathlib import Path
 

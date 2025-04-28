@@ -1,5 +1,5 @@
 import tempfile, os
-from estimation_2d import *
+from pipeline import *
 
 
 @hydra.main(version_base=None, 

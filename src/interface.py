@@ -9,7 +9,7 @@ import os
 import shutil
 import tempfile
 import numpy as np
-from estimation_2d import *
+from pipeline import *
 from utils import *
 from pathlib import Path
 import time

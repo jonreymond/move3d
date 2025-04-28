@@ -1,5 +1,7 @@
-name: move3d
+name: move3d-gpu
 channels:
+  - pytorch
+  - nvidia
   - conda-forge
 dependencies:
   - python=3.11
@@ -11,5 +13,11 @@ dependencies:
   - kineticstoolkit
   - onnxruntime
   - pip
+  - pytorch
+  - torchvision
+  - torchaudio
+  - pytorch-cuda=11.6
   - pip:
-      - rtmlib    - imageio
+      - rtmlib
+      - imageio
+      - -r requirements.txt
